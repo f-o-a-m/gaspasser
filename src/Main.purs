@@ -36,10 +36,10 @@ import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 
 keyLengthLimit :: Int
-keyLengthLimit = 100
+keyLengthLimit = 65
 
 valueLengthLimit :: Int
-valueLengthLimit = 300
+valueLengthLimit = 65
 
 -- | Traverse a collection in parallel.
 parFor :: forall f m t a b
@@ -60,7 +60,7 @@ retryWeb3 actionName provider m = do
   case eRes of
     Left err -> do
       -- too lazy to fix this
-      unsafeCoerceAff $ log ("Will retry due to catching an error doing " <> show actionName )-- <> ": " <> (stringify $ unsafeCoerce err))
+      unsafeCoerceAff $ log ("Will retry due to catching an error doing " <> actionName )-- <> ": " <> (stringify $ unsafeCoerce err))
       liftAff $ delay (Milliseconds 3000.0)
       retryWeb3 actionName provider m
     Right res -> pure res
@@ -99,7 +99,7 @@ main = void <<< launchAff $ do
       parFor ((enumFromTo 1 valueLengthLimit) :: Array Int) $ \valLen -> do
         let key   = fromCharArray $ replicate keyLen 'a'
             value = fromCharArray $ replicate valLen 'a'
-            funCallStr = "SAS.setAttribute(<" <> show keyLen <> ">, <" <> show valLen <> ">)"
+            funCallStr = contract <> ".setAttribute(<" <> show keyLen <> ">, <" <> show valLen <> ">)"
         log $ "We're doing " <> funCallStr
         txHash <- retryWeb3 funCallStr conf.provider (SAS.setAttribute opts { key, value })
         log $ "We're waiting for the receipt for " <> funCallStr
