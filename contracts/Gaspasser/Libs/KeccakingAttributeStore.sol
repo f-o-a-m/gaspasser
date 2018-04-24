@@ -4,15 +4,15 @@ pragma solidity^0.4.11;
 // arbitrary string => string mappings which it keccaks! first
 
 library KeccakingAttributeStore {
-    struct Data {
+    struct AttrStore {
         mapping(bytes32 => string) store;
     }
 
-    function getAttribute(Data storage self, string key) public constant returns (string) {
+    function getAttr(AttrStore storage self, string key) public constant returns (string) {
         return self.store[keccak256(key)];
     }
 
-    function setAttribute(Data storage self, string key, string val) public {
+    function setAttr(AttrStore storage self, string key, string val) public {
         self.store[keccak256(key)] = val;
     }
 }
