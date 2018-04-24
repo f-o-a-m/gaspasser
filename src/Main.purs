@@ -107,8 +107,8 @@ main = void <<< launchAff $ do
         let status = txReceipt.status
             gasUsed = show txReceipt.gasUsed
         liftAff <<< log $ case status of
-            Succeeded -> "SUCCESS! " <> contract <> " @ " <> show keyLen <> "/" <> show valLen <> ": " <> gasUsed
-            Failed    -> "FAIL :(! " <> contract <> " @ " <> show keyLen <> "/" <> show valLen <> ": " <> gasUsed
+            Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> gasUsed
+            Failed    -> "FAIL :(! " <> funCallStr <> ": " <> gasUsed
         pure { status, gasUsed, keyLen, valLen }
 
   let rawResults = M.fromFoldable $ map concat <$> results
