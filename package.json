@@ -8,7 +8,7 @@
     "compile-contracts": "pulp build --src-path chant/compile -m CompileMain --to compile.js && node compile.js",
     "deploy-contracts": "pulp build --src-path chant/deploy -I src -m DeployMain --to deploy.js && node deploy.js",
     "watch-genesis": "fswatch ./cliquebait-generated.json | xargs -n1 ./cb.sh",
-    "collect": "pulp run"
+    "collect": "pulp run -I chant/deploy"
   },
   "author": "",
   "license": "ISC",

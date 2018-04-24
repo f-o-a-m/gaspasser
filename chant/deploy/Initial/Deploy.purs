@@ -1,17 +1,22 @@
 module Initial.Deploy (deployScript) where
-
-import Prelude (Unit, bind, pure, unit, (#), ($))
+import Prelude (bind, pure, (#), ($))
 import Chanterelle.Deploy (deployContract)
 import Chanterelle.Internal.Types (DeployConfig(..), DeployM)
 import Control.Monad.Reader.Class (ask)
 import Data.Lens ((?~))
 import Data.Maybe (fromJust)
-import Initial.ContractConfig (embeddedKecASConfig, embeddedRawStrASConfig, kecASConfig, rawStrASConfig)
-import Network.Ethereum.Web3 (defaultTransactionOptions, _from, _gas)
+import Initial.ContractConfig (Contract, EmbeddedKecAS, EmbeddedRawStrAS, KecAS, RawStrAS, embeddedKecASConfig, embeddedRawStrASConfig, kecASConfig, rawStrASConfig)
 import Network.Ethereum.Core.BigNumber (parseBigNumber, hexadecimal)
+import Network.Ethereum.Web3 (_from, _gas, defaultTransactionOptions)
 import Partial.Unsafe (unsafePartial)
 
-deployScript :: forall eff. DeployM eff Unit --(Record DeployResults)
+type DeployResults = ( emKecAS :: Contract EmbeddedKecAS
+                     , emRSAS  :: Contract EmbeddedRawStrAS
+                     , kecAS   :: Contract KecAS
+                     , rsAS    :: Contract RawStrAS
+                     )
+
+deployScript :: forall eff. DeployM eff (Record DeployResults)
 deployScript = do
   deployCfg@(DeployConfig {primaryAccount}) <- ask
   let bigGasLimit = unsafePartial fromJust $ parseBigNumber hexadecimal "0x200000"
@@ -22,4 +27,4 @@ deployScript = do
   kecAS   <- deployContract txOpts kecASConfig
   rsAS    <- deployContract txOpts rawStrASConfig
 
-  pure unit
+  pure { emKecAS, emRSAS, kecAS, rsAS }

@@ -21,3 +21,4 @@ frontend/Generated/
 *.cabal
 compile.js
 deploy.js
+collected-results/*

@@ -1,9 +1,14 @@
 module Initial.ContractConfig where
 
 import Chanterelle.Internal.Types (ContractConfig, NoArgs, noArgs, constructorNoArgs)
+import Network.Ethereum.Web3 (Address)
 
-type EmbeddedKecASArgs = NoArgs
-embeddedKecASConfig :: ContractConfig EmbeddedKecASArgs
+type Contract a = { deployAddress :: Address
+                  , deployArgs    :: Record a 
+                  }
+
+type EmbeddedKecAS = NoArgs
+embeddedKecASConfig :: ContractConfig EmbeddedKecAS
 embeddedKecASConfig = 
     { filepath: "./abis/Gaspasser/Tests/EmbeddedKecAS.json"
     , name: "EmbeddedKecAS"
@@ -11,8 +16,8 @@ embeddedKecASConfig =
     , unvalidatedArgs: noArgs
     }
 
-type EmbeddedRawStrASArgs = NoArgs
-embeddedRawStrASConfig :: ContractConfig EmbeddedRawStrASArgs
+type EmbeddedRawStrAS = NoArgs
+embeddedRawStrASConfig :: ContractConfig EmbeddedRawStrAS
 embeddedRawStrASConfig = 
     { filepath: "./abis/Gaspasser/Tests/EmbeddedRawStrAS.json"
     , name: "EmbeddedRawStrAS"
@@ -20,8 +25,8 @@ embeddedRawStrASConfig =
     , unvalidatedArgs: noArgs
     }
 
-type KecASArgs = NoArgs
-kecASConfig :: ContractConfig KecASArgs
+type KecAS = NoArgs
+kecASConfig :: ContractConfig KecAS
 kecASConfig = 
     { filepath: "./abis/Gaspasser/Tests/KecAS.json"
     , name: "KecAS"
@@ -29,8 +34,8 @@ kecASConfig =
     , unvalidatedArgs: noArgs
     }
 
-type RawStrASArgs = NoArgs
-rawStrASConfig :: ContractConfig RawStrASArgs
+type RawStrAS = NoArgs
+rawStrASConfig :: ContractConfig RawStrAS
 rawStrASConfig = 
     { filepath: "./abis/Gaspasser/Tests/RawStrAS.json"
     , name: "RawStrAS"

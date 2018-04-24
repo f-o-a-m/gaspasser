@@ -1,3 +1,6 @@
 {
-    "git.ignoreLimitWarning": true
+    "purescript.buildCommand": "pulp build -I src:chant/compile:chant/deploy -- --json-errors",
+    "purescript.outputDirectory": "output/",
+    "purescript.sourcePath": "src",
+    "purescript.editorMode": true
 }
