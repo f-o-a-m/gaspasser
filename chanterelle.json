@@ -1,0 +1,35 @@
+{
+    "name": "gaspasser",
+    "version": "0.0.1",
+    "source-dir": "contracts",
+    "artifacts-dir": "abis",
+    "modules": [ "Gaspasser.StringAttributeStore"
+               , "Gaspasser.Tests.EmbeddedKecAS"
+               , "Gaspasser.Tests.EmbeddedRawStrAS"
+               , "Gaspasser.Tests.KecAS"
+               , "Gaspasser.Tests.RawStrAS"
+               ],
+    "dependencies": [ "zeppelin-solidity"
+                    , "sol-attrstore"
+                    , "sol-dll"
+                    , "erc20-tokens"
+                    ],
+    "libraries": {
+      "KeccakingAttributeStore": {
+        "address": "0x0000000000000000000000000000000000000001",
+        "code": {
+          "file": "contracts/Gaspasser/Libs/KeccakingAttributeStore.sol"
+        }
+      },
+      "RawStringAttributeStore": {
+        "address": "0x0000000000000000000000000000000000000002",
+        "code": {
+          "file": "contracts/Gaspasser/Libs/RawStringAttributeStore.sol"
+        }
+      }
+    },
+    "purescript-generator": {
+        "output-path": "src",
+        "module-prefix": "Contracts"
+    }
+}
