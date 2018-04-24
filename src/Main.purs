@@ -103,7 +103,7 @@ main = void <<< launchAff $ do
         log $ "We're doing " <> funCallStr
         txHash <- retryWeb3 funCallStr conf.provider (SAS.setAttribute opts { key, value })
         log $ "We're waiting for the receipt for " <> funCallStr
-        TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(" <> show txHash <> ")") conf.provider (eth_getTransactionReceipt txHash)
+        TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(\"" <> show txHash <> "\")") conf.provider (eth_getTransactionReceipt txHash)
         let status = txReceipt.status
             gasUsed = show txReceipt.gasUsed
         liftAff <<< log $ case status of
