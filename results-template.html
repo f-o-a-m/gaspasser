@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <style type="text/css">
+        .plotly-container {
+            width: 100%;
+            height: 75rem;
+            display: block;
+        }
+        </style>
+        <script type="text/javascript">
+        var rawData;
+
+        function plotResultSet(name) {
+            var matrix = [];
+            function setMatrixVal(x, y, z) {
+                if (matrix[x] == undefined) {
+                    matrix[x] = [];
+                }
+                matrix[x][y] = z;
+            }
+            // we need to make sure the matrix isnt sparse anywhere, so we set (x, 0, 0) and (0, y, 0) in the loop, and (0, 0, 0) manually
+            setMatrixVal(0, 0, 0);
+            rawData[name].forEach(function (point) { 
+                setMatrixVal(point.keyLen, 0, 0);
+                setMatrixVal(0, point.valLen, 0);
+                setMatrixVal(point.keyLen, point.valLen, parseInt(point.gasUsed));
+            });
+
+            console.log("matrix(" + name + ") is: ", matrix);
+
+            var layout = {
+              title: "",
+              autosize: true,
+              margin: {
+                  l: 30,
+                  r: 30,
+                  b: 30,
+                  t: 30,
+              },
+              scene: {
+                xaxis: { title: "key length" },
+                yaxis: { title: "value length" },
+                zaxis: { title: "tx gas used" },
+              },
+            };
+
+            var trace = [{
+                z: matrix,
+                type: "surface",
+            }];
+            Plotly.newPlot(name, trace, layout)
+        }
+        window.onload = function () {
+            var enabledPlots = [
+                "rsAS", 
+                "kecAS", 
+                "emRSAS", 
+                "emKecAS",
+            ]
+            enabledPlots.forEach(plotResultSet);
+        };
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>lib-based raw-string</h2>
+                    <div class="plotly-container" id="rsAS"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>lib-based keccaking</h2>
+                    <div class="plotly-container" id="kecAS"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>embedded raw-string</h2>
+                    <div class="plotly-container" id="emRSAS"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>embedded keccaking</h2>
+                    <div class="plotly-container" id="emKecAS"></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

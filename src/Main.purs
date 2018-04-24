@@ -19,7 +19,8 @@ import Data.Either (Either(..))
 import Data.Enum (enumFromTo)
 import Data.Lens ((?~))
 import Data.Maybe (fromJust, fromMaybe)
-import Data.String (fromCharArray)
+import Data.StrMap as M
+import Data.String (Pattern(..), Replacement(..), fromCharArray, replace)
 import Data.Traversable (for, for_)
 import Data.Tuple (Tuple(..))
 import Initial.Deploy as Initial
@@ -33,10 +34,10 @@ import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 
 keyLengthLimit :: Int
-keyLengthLimit = 2
+keyLengthLimit = 15
 
 valueLengthLimit :: Int
-valueLengthLimit = 2
+valueLengthLimit = 15
 
 main :: forall e 
       . Eff ( now       :: NOW
@@ -82,6 +83,13 @@ main = void <<< launchAff $ do
         pure { status, gasUsed, keyLen, valLen }
   case eRes of
     Left err -> liftAff $ log $ "We had a super fail :((((((( " <> unsafeCoerce err
-    Right results -> for_ results $ \(Tuple contractName res) -> do
-      let flattenedResults = concat res
-      FS.writeTextFile UTF8 ("collected-results/" <> contractName <> ".json") (stringify $ unsafeCoerce flattenedResults)
+    Right results -> do
+      let rawResults = M.fromFoldable $ map concat <$> results
+          rawDataStmt = "var rawData = " <> (stringify $ unsafeCoerce rawResults) <> ";"
+      template <- FS.readTextFile UTF8 "results-template.html"
+      let substituted = replace (Pattern "var rawData;") (Replacement rawDataStmt) template
+      FS.writeTextFile UTF8 "collected-results/results.html" substituted
+
+      for_ results $ \(Tuple contractName res) ->
+        FS.writeTextFile UTF8 ("collected-results/" <> contractName <> ".json") (stringify $ unsafeCoerce res)
+

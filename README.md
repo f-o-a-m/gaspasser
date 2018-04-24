@@ -10,3 +10,5 @@ npm run compile-contracts
 npm run deploy-contracts
 npm run collect
 ```
+
+Then open `collected-results/results.html` in your browser of choice!
