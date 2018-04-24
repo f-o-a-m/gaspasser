@@ -16,8 +16,7 @@
       "purescript-mkdirp": "^v0.3.0",
       "purescript-logging": "^2.0.0",
       "purescript-now": "^3.0.0",
-      "purescript-validation": "^3.2.0",
-      "purescript-geohash": "git+https://github.com/f-o-a-m/purescript-geohash#master"
+      "purescript-validation": "^3.2.0"
     },
     "devDependencies": {
       "purescript-psci-support": "^3.0.0",
