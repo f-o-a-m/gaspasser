@@ -36,7 +36,7 @@ import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 
 keyLengthLimit :: Int
-keyLengthLimit = 10
+keyLengthLimit = 100
 
 valueLengthLimit :: Int
 valueLengthLimit = 300
@@ -60,7 +60,7 @@ retryWeb3 actionName provider m = do
   case eRes of
     Left err -> do
       -- too lazy to fix this
-      unsafeCoerceAff $ log ("Will retry due to catching an error doing " <> show actionName <> ": " <> (stringify $ unsafeCoerce err))
+      unsafeCoerceAff $ log ("Will retry due to catching an error doing " <> show actionName )-- <> ": " <> (stringify $ unsafeCoerce err))
       liftAff $ delay (Milliseconds 3000.0)
       retryWeb3 actionName provider m
     Right res -> pure res
