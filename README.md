@@ -11,4 +11,6 @@ npm run deploy-contracts
 npm run collect
 ```
 
+The metric fuckton of errors due to overloading geth is perfectly normal! It keeps on retrying!
+
 Then open `collected-results/results.html` in your browser of choice!
