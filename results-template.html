@@ -22,10 +22,10 @@
                 matrix[x][y] = z;
             }
             // we need to make sure the matrix isnt sparse anywhere, so we set (x, 0, 0) and (0, y, 0) in the loop, and (0, 0, 0) manually
-            setMatrixVal(0, 0, 0);
+            //setMatrixVal(0, 0, 0);
             rawData[name].forEach(function (point) { 
-                setMatrixVal(point.keyLen, 0, 0);
-                setMatrixVal(0, point.valLen, 0);
+                //setMatrixVal(point.keyLen, 0, 0);
+                //setMatrixVal(0, point.valLen, 0);
                 setMatrixVal(point.keyLen, point.valLen, parseInt(point.gasUsed));
             });
 

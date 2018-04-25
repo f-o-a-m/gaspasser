@@ -21,7 +21,7 @@ import Data.Lens ((?~))
 import Data.Maybe (fromJust, fromMaybe)
 import Data.StrMap as M
 import Data.String (Pattern(..), Replacement(..), fromCharArray, replace)
-import Data.Traversable (class Traversable, for_)
+import Data.Traversable (class Traversable, for, for_)
 import Data.Tuple (Tuple(..))
 import Initial.Deploy as Initial
 import Network.Ethereum.Web3 (ETH, Provider, TransactionReceipt(..), TransactionStatus(..), _from, _gas, _to, defaultTransactionOptions, embed, runWeb3)
@@ -36,10 +36,10 @@ import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
 
 keyLengthLimit :: Int
-keyLengthLimit = 65
+keyLengthLimit = 257
 
 valueLengthLimit :: Int
-valueLengthLimit = 65
+valueLengthLimit = 257
 
 -- | Traverse a collection in parallel.
 parFor :: forall f m t a b
@@ -61,7 +61,7 @@ retryWeb3 actionName provider m = do
     Left err -> do
       -- too lazy to fix this
       unsafeCoerceAff $ log ("Will retry due to catching an error doing " <> actionName )-- <> ": " <> (stringify $ unsafeCoerce err))
-      liftAff $ delay (Milliseconds 3000.0)
+      liftAff $ delay (Milliseconds 500.0)
       retryWeb3 actionName provider m
     Right res -> pure res
 
@@ -94,15 +94,16 @@ main = void <<< launchAff $ do
                           , opts: txOpts conf.rsAS.deployAddress
                           }
                         ]
-  results <- parFor targetContracts $ \{contract, opts} -> Tuple contract <$> do
-    parFor ((enumFromTo 1 keyLengthLimit) :: Array Int) $ \keyLen ->
-      parFor ((enumFromTo 1 valueLengthLimit) :: Array Int) $ \valLen -> do
+  results <- for targetContracts $ \{contract, opts} -> Tuple contract <$> do
+    for ((enumFromTo 0 keyLengthLimit) :: Array Int) $ \keyLen ->
+      parFor ((enumFromTo 0 valueLengthLimit) :: Array Int) $ \valLen -> do
         let key   = fromCharArray $ replicate keyLen 'a'
             value = fromCharArray $ replicate valLen 'a'
             funCallStr = contract <> ".setAttribute(<" <> show keyLen <> ">, <" <> show valLen <> ">)"
         log $ "We're doing " <> funCallStr
         txHash <- retryWeb3 funCallStr conf.provider (SAS.setAttribute opts { key, value })
         log $ "We're waiting for the receipt for " <> funCallStr
+        delay (Milliseconds 2000.0)
         TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(\"" <> show txHash <> "\")") conf.provider (eth_getTransactionReceipt txHash)
         let status = txReceipt.status
             gasUsed = show txReceipt.gasUsed
