@@ -122,5 +122,5 @@ main = void <<< launchAff $ do
   FS.writeTextFile UTF8 "collected-results/results.html" substituted
 
   for_ results $ \(Tuple contractName res) ->
-    FS.writeTextFile UTF8 ("collected-results/" <> contractName <> ".json") (stringify $ unsafeCoerce res)
+    FS.writeTextFile UTF8 ("collected-results/" <> contractName <> ".json") (stringify <<< unsafeCoerce $ concat res)
 
