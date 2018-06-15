@@ -81,7 +81,7 @@ main = void <<< launchAff $ do
       txOpts contract = defaultTransactionOptions # _from ?~ primaryAccount
                                                   # _to   ?~ contract
                                                   # _gas  ?~ embed 2000000
-      targetContracts = [ {-{ contract: "noopAS"
+      targetContracts = [ { contract: "noopAS"
                           , opts: txOpts conf.noopAS.deployAddress
                           }
                         , { contract: "emKecAS"
@@ -93,7 +93,7 @@ main = void <<< launchAff $ do
                         , { contract: "kecAS"
                           , opts: txOpts conf.kecAS.deployAddress
                           }
-                        , -}{ contract: "rsAS"
+                        , { contract: "rsAS"
                           , opts: txOpts conf.rsAS.deployAddress
                           }
                         ]
