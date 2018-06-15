@@ -7,6 +7,16 @@ type Contract a = { deployAddress :: Address
                   , deployArgs    :: Record a 
                   }
 
+type NoopAS = NoArgs
+noopASConfig :: ContractConfig NoopAS
+noopASConfig =
+    { filepath: "./abis/Gaspasser/Tests/NoopAS.json"
+    , name: "NoopAS"
+    , constructor: constructorNoArgs
+    , unvalidatedArgs: noArgs
+    }
+
+
 type EmbeddedKecAS = NoArgs
 embeddedKecASConfig :: ContractConfig EmbeddedKecAS
 embeddedKecASConfig = 

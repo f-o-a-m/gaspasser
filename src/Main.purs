@@ -81,7 +81,10 @@ main = void <<< launchAff $ do
       txOpts contract = defaultTransactionOptions # _from ?~ primaryAccount
                                                   # _to   ?~ contract
                                                   # _gas  ?~ embed 2000000
-      targetContracts = [ { contract: "emKecAS"
+      targetContracts = [ {-{ contract: "noopAS"
+                          , opts: txOpts conf.noopAS.deployAddress
+                          }
+                        , { contract: "emKecAS"
                           , opts: txOpts conf.emKecAS.deployAddress
                           }
                         , { contract: "emRSAS"
@@ -90,7 +93,7 @@ main = void <<< launchAff $ do
                         , { contract: "kecAS"
                           , opts: txOpts conf.kecAS.deployAddress
                           }
-                        , { contract: "rsAS"
+                        , -}{ contract: "rsAS"
                           , opts: txOpts conf.rsAS.deployAddress
                           }
                         ]
@@ -108,8 +111,8 @@ main = void <<< launchAff $ do
         let status = txReceipt.status
             gasUsed = show txReceipt.gasUsed
         liftAff <<< log $ case status of
-            Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> gasUsed
-            Failed    -> "FAIL :(! " <> funCallStr <> ": " <> gasUsed
+            Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> gasUsed <> " / " <> show txHash
+            Failed    -> "FAIL :(! " <> funCallStr <> ": " <> gasUsed <> " / " <> show txHash
         pure { status, gasUsed, keyLen, valLen }
 
   let rawResults = M.fromFoldable $ map concat <$> results

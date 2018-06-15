@@ -8,6 +8,7 @@
                , "Gaspasser.Tests.EmbeddedRawStrAS"
                , "Gaspasser.Tests.KecAS"
                , "Gaspasser.Tests.RawStrAS"
+               , "Gaspasser.Tests.NoopAS"
                ],
     "dependencies": [ "zeppelin-solidity"
                     , "sol-attrstore"
@@ -16,13 +17,13 @@
                     ],
     "libraries": {
       "KeccakingAttributeStore": {
-        "address": "0x0000000000000000000000000000000000000001",
+        "address": "0xFF00000000000000000000000000000000000001",
         "code": {
           "file": "contracts/Gaspasser/Libs/KeccakingAttributeStore.sol"
         }
       },
       "RawStringAttributeStore": {
-        "address": "0x0000000000000000000000000000000000000002",
+        "address": "0xFF00000000000000000000000000000000000002",
         "code": {
           "file": "contracts/Gaspasser/Libs/RawStringAttributeStore.sol"
         }

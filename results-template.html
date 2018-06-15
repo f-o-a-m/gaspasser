@@ -53,6 +53,7 @@
         }
         window.onload = function () {
             var enabledPlots = [
+                "noopAS",
                 "rsAS", 
                 "kecAS", 
                 "emRSAS", 
@@ -64,6 +65,12 @@
     </head>
     <body>
         <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>no-op</h2>
+                    <div class="plotly-container" id="noopAS"></div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-12">
                     <h2>lib-based raw-string</h2>
