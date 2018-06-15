@@ -38,9 +38,9 @@
                   b: 30,
                   t: 30,
               },
-              scene: {
-                xaxis: { title: "key length" },
-                yaxis: { title: "value length" },
+              scene: { // plotly apparently wants [y][x][z] in the matrix, not [x][y][z]...
+                yaxis: { title: "key length" },
+                xaxis: { title: "value length" },
                 zaxis: { title: "tx gas used" },
               },
             };
