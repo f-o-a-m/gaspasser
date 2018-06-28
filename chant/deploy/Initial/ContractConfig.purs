@@ -7,6 +7,16 @@ type Contract a = { deployAddress :: Address
                   , deployArgs    :: Record a 
                   }
 
+
+type OST = NoArgs
+ostConfig :: ContractConfig OST
+ostConfig =
+    { filepath: "./abis/OrderStatisticTree.json"
+    , name: "OrderStatisticTree"
+    , constructor: constructorNoArgs
+    , unvalidatedArgs: noArgs
+    }
+
 type NoopAS = NoArgs
 noopASConfig :: ContractConfig NoopAS
 noopASConfig =

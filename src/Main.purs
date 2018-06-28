@@ -4,6 +4,7 @@ import Prelude
 
 import Chanterelle.Test (buildTestConfig)
 import Contracts.Gaspasser.StringAttributeStore as SAS
+import Contracts.OrderStatisticTree as OST
 import Control.Monad.Aff (Aff, Milliseconds(..), delay, launchAff)
 import Control.Monad.Aff.Class (liftAff)
 import Control.Monad.Aff.Console (CONSOLE, log)
@@ -14,7 +15,7 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Control.Monad.Eff.Now (NOW)
 import Control.Parallel (class Parallel, parTraverse)
 import Data.Argonaut (stringify)
-import Data.Array (concat, replicate, (!!))
+import Data.Array (concat, replicate, (!!), nub)
 import Data.Either (Either(..))
 import Data.Enum (enumFromTo)
 import Data.Lens ((?~))
@@ -26,6 +27,8 @@ import Data.Tuple (Tuple(..))
 import Initial.Deploy as Initial
 import Network.Ethereum.Web3 (ETH, Provider, TransactionReceipt(..), TransactionStatus(..), _from, _gas, _to, defaultTransactionOptions, embed, runWeb3)
 import Network.Ethereum.Web3.Api (eth_getTransactionReceipt)
+import Network.Ethereum.Web3.Solidity (uIntNFromBigNumber)
+import Network.Ethereum.Web3.Solidity.Sizes (s256)
 import Network.Ethereum.Web3.Types.Types (Web3)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (FS)
@@ -34,6 +37,9 @@ import Node.Process (PROCESS)
 import Node.Process as NP
 import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
+import Partial.Unsafe (unsafePartial)
+import Control.Monad.Eff.Random (RANDOM, randomInt)
+import Data.List.Lazy (replicateM)
 
 keyLengthLimit :: Int
 keyLengthLimit = 257
@@ -72,55 +78,22 @@ main :: forall e
             , fs        :: FS
             , process   :: PROCESS
             , exception :: EXCEPTION
+            , random    :: RANDOM
             | e
             ) Unit
 main = void <<< launchAff $ do
   nodeUrl <- liftEff $ fromMaybe "http://localhost:8545" <$> NP.lookupEnv "NODE_URL"
   conf <- buildTestConfig nodeUrl 60 Initial.deployScript
   let primaryAccount = unsafePartial $ fromJust $ conf.accounts !! 0
-      txOpts contract = defaultTransactionOptions # _from ?~ primaryAccount
-                                                  # _to   ?~ contract
+      txOpts = defaultTransactionOptions # _from ?~ primaryAccount
+                                                  # _to   ?~ conf.ost.deployAddress
                                                   # _gas  ?~ embed 2000000
-      targetContracts = [ { contract: "noopAS"
-                          , opts: txOpts conf.noopAS.deployAddress
-                          }
-                        , { contract: "emKecAS"
-                          , opts: txOpts conf.emKecAS.deployAddress
-                          }
-                        , { contract: "emRSAS"
-                          , opts: txOpts conf.emRSAS.deployAddress
-                          }
-                        , { contract: "kecAS"
-                          , opts: txOpts conf.kecAS.deployAddress
-                          }
-                        , { contract: "rsAS"
-                          , opts: txOpts conf.rsAS.deployAddress
-                          }
-                        ]
-  results <- for targetContracts $ \{contract, opts} -> Tuple contract <$> do
-    for ((enumFromTo 0 keyLengthLimit) :: Array Int) $ \keyLen ->
-      parFor ((enumFromTo 0 valueLengthLimit) :: Array Int) $ \valLen -> do
-        let key   = fromCharArray $ replicate keyLen 'a'
-            value = fromCharArray $ replicate valLen 'a'
-            funCallStr = contract <> ".setAttribute(<" <> show keyLen <> ">, <" <> show valLen <> ">)"
-        log $ "We're doing " <> funCallStr
-        txHash <- retryWeb3 funCallStr conf.provider (SAS.setAttribute opts { key, value })
-        log $ "We're waiting for the receipt for " <> funCallStr
-        delay (Milliseconds 2000.0)
-        TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(\"" <> show txHash <> "\")") conf.provider (eth_getTransactionReceipt txHash)
-        let status = txReceipt.status
-            gasUsed = show txReceipt.gasUsed
-        liftAff <<< log $ case status of
-            Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> gasUsed <> " / " <> show txHash
-            Failed    -> "FAIL :(! " <> funCallStr <> ": " <> gasUsed <> " / " <> show txHash
-        pure { status, gasUsed, keyLen, valLen }
 
-  let rawResults = M.fromFoldable $ map concat <$> results
-      rawDataStmt = "var rawData = " <> (stringify $ unsafeCoerce rawResults) <> ";"
-  template <- FS.readTextFile UTF8 "results-template.html"
-  let substituted = replace (Pattern "var rawData;") (Replacement rawDataStmt) template
-  FS.writeTextFile UTF8 "collected-results/results.html" substituted
 
-  for_ results $ \(Tuple contractName res) ->
-    FS.writeTextFile UTF8 ("collected-results/" <> contractName <> ".json") (stringify <<< unsafeCoerce $ concat res)
+  toInsert <- liftEff $ replicateM 1000 $ randomInt 0 100000
 
+  for_ toInsert $ \n -> do
+    txHash <- retryWeb3 "insert" conf.provider $ OST.insert txOpts { value: unsafePartial fromJust <<< uIntNFromBigNumber s256 $ embed n }
+    delay (Milliseconds 500.0)
+    liftAff $ log $ "txHash for inserting " <> show n <> " with txHash:  " <> show txHash
+  

@@ -9,6 +9,7 @@
                , "Gaspasser.Tests.KecAS"
                , "Gaspasser.Tests.RawStrAS"
                , "Gaspasser.Tests.NoopAS"
+               , "OrderStatisticTree"
                ],
     "dependencies": [ "zeppelin-solidity"
                     , "sol-attrstore"
