@@ -15,8 +15,9 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Control.Monad.Eff.Now (NOW)
 import Control.Parallel (class Parallel, parTraverse)
 import Data.Argonaut (stringify)
-import Data.Array (concat, replicate, (!!), nub)
+import Data.Array (concat, replicate, (!!), nub, reverse, sort, fromFoldable, zip)
 import Data.Either (Either(..))
+import Data.Foldable (sum)
 import Data.Enum (enumFromTo)
 import Data.Lens ((?~))
 import Data.Maybe (fromJust, fromMaybe)
@@ -82,18 +83,27 @@ main :: forall e
             | e
             ) Unit
 main = void <<< launchAff $ do
-  nodeUrl <- liftEff $ fromMaybe "http://localhost:8545" <$> NP.lookupEnv "NODE_URL"
-  conf <- buildTestConfig nodeUrl 60 Initial.deployScript
-  let primaryAccount = unsafePartial $ fromJust $ conf.accounts !! 0
-      txOpts = defaultTransactionOptions # _from ?~ primaryAccount
-                                                  # _to   ?~ conf.ost.deployAddress
-                                                  # _gas  ?~ embed 2000000
+  toInsert' <- liftEff $ replicateM 100 $ randomInt 0 10000
+  let toInsert = fromFoldable toInsert'
 
+  parFor (zip [sort toInsert, reverse <<< sort $ toInsert, toInsert] ["inc", "dec", "rnd"]) $ \(Tuple set order) -> do
+    nodeUrl <- liftEff $ fromMaybe "http://localhost:8545" <$> NP.lookupEnv "NODE_URL"
+    conf <- buildTestConfig nodeUrl 60 Initial.deployScript
+    let primaryAccount = unsafePartial $ fromJust $ conf.accounts !! 0
+        txOpts = defaultTransactionOptions # _from ?~ primaryAccount
+                                                    # _to   ?~ conf.ost.deployAddress
+                                                    # _gas  ?~ embed 2000000
+    liftAff <<< log $ "Adding order: " <> order
+    tots <- for set $ \n -> do
+      txHash <- retryWeb3 "insert" conf.provider $ OST.insert txOpts { value: unsafePartial fromJust <<< uIntNFromBigNumber s256 $ embed n }
+      delay (Milliseconds 2000.0)
+      TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(\"" <> show txHash <> "\")") conf.provider (eth_getTransactionReceipt txHash)
 
-  toInsert <- liftEff $ replicateM 1000 $ randomInt 0 100000
-
-  for_ toInsert $ \n -> do
-    txHash <- retryWeb3 "insert" conf.provider $ OST.insert txOpts { value: unsafePartial fromJust <<< uIntNFromBigNumber s256 $ embed n }
-    delay (Milliseconds 500.0)
-    liftAff $ log $ "txHash for inserting " <> show n <> " with txHash:  " <> show txHash
-  
+      let status = txReceipt.status
+          gasUsed = txReceipt.gasUsed
+          funCallStr = show n
+      --liftAff <<< log $ case status of
+      --  Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> show gasUsed <> " / " <> show txHash
+      --  Failed    -> "FAIL :(! " <> funCallStr <> ": " <> show gasUsed <> " / " <> show txHash
+      pure gasUsed
+    liftAff <<< log $ "Total gas for " <> order <> ": " <> show (sum tots)
