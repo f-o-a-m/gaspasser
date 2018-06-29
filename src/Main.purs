@@ -3,7 +3,6 @@ module Main (main) where
 import Prelude
 
 import Chanterelle.Test (buildTestConfig)
-import Contracts.Gaspasser.StringAttributeStore as SAS
 import Contracts.OrderStatisticTree as OST
 import Control.Monad.Aff (Aff, Milliseconds(..), delay, launchAff)
 import Control.Monad.Aff.Class (liftAff)
@@ -15,18 +14,20 @@ import Control.Monad.Eff.Exception (EXCEPTION)
 import Control.Monad.Eff.Now (NOW)
 import Control.Parallel (class Parallel, parTraverse)
 import Data.Argonaut (stringify)
-import Data.Array (concat, replicate, (!!), nub, reverse, sort, fromFoldable, zip)
+import Data.Array (concat, (!!), reverse, sort, fromFoldable, zip)
 import Data.Either (Either(..))
+import Data.Int (toNumber)
 import Data.Foldable (sum)
 import Data.Enum (enumFromTo)
 import Data.Lens ((?~))
 import Data.Maybe (fromJust, fromMaybe)
 import Data.StrMap as M
 import Data.String (Pattern(..), Replacement(..), fromCharArray, replace)
-import Data.Traversable (class Traversable, for, for_)
+import Data.Traversable (class Traversable, for)
 import Data.Tuple (Tuple(..))
 import Initial.Deploy as Initial
-import Network.Ethereum.Web3 (ETH, Provider, TransactionReceipt(..), TransactionStatus(..), _from, _gas, _to, defaultTransactionOptions, embed, runWeb3)
+import Network.Ethereum.Core.BigNumber (unsafeToInt)
+import Network.Ethereum.Web3 (ETH, Provider, TransactionReceipt(..), _from, _gas, _to, defaultTransactionOptions, embed, runWeb3)
 import Network.Ethereum.Web3.Api (eth_getTransactionReceipt)
 import Network.Ethereum.Web3.Solidity (uIntNFromBigNumber)
 import Network.Ethereum.Web3.Solidity.Sizes (s256)
@@ -38,9 +39,9 @@ import Node.Process (PROCESS)
 import Node.Process as NP
 import Partial.Unsafe (unsafePartial)
 import Unsafe.Coerce (unsafeCoerce)
-import Partial.Unsafe (unsafePartial)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Data.List.Lazy (replicateM)
+import Statistics.Sample (mean, variance, stddev)
 
 keyLengthLimit :: Int
 keyLengthLimit = 257
@@ -83,7 +84,7 @@ main :: forall e
             | e
             ) Unit
 main = void <<< launchAff $ do
-  toInsert' <- liftEff $ replicateM 100 $ randomInt 0 10000
+  toInsert' <- liftEff $ replicateM 1000 $ randomInt 0 10000
   let toInsert = fromFoldable toInsert'
 
   parFor (zip [sort toInsert, reverse <<< sort $ toInsert, toInsert] ["inc", "dec", "rnd"]) $ \(Tuple set order) -> do
@@ -100,10 +101,14 @@ main = void <<< launchAff $ do
       TransactionReceipt txReceipt <- retryWeb3 ("eth.getTransactionReceipt(\"" <> show txHash <> "\")") conf.provider (eth_getTransactionReceipt txHash)
 
       let status = txReceipt.status
-          gasUsed = txReceipt.gasUsed
+          gasUsed = unsafeToInt txReceipt.gasUsed
           funCallStr = show n
       --liftAff <<< log $ case status of
       --  Succeeded -> "SUCCESS! " <> funCallStr <> ": " <> show gasUsed <> " / " <> show txHash
       --  Failed    -> "FAIL :(! " <> funCallStr <> ": " <> show gasUsed <> " / " <> show txHash
       pure gasUsed
-    liftAff <<< log $ "Total gas for " <> order <> ": " <> show (sum tots)
+    let totalGas = sum tots
+    liftAff <<< log $ "Total gas for " <> order <> ": " <> show totalGas
+      <> "\tMean: " <> show (mean $ toNumber <$> tots) <> " per tx. "
+      <> "\tVariance: " <> show (variance $ toNumber <$> tots)
+      <> "\tStd. deviation: " <> show (stddev $ toNumber <$> tots)
